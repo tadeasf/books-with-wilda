@@ -1,21 +1,19 @@
-FROM node:20-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
+# Use the latest official Bun image
+FROM oven/bun:latest AS base
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json package-lock.json ./
-RUN npm ci
+# Install dependencies
+FROM base AS deps
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-# Rebuild the source code only when needed
+# Build the application
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Environment variables must be present at build time
-# https://nextjs.org/docs/basic-features/environment-variables
+# Environment variables needed at build time
 ARG AUTH0_CLIENT_ID
 ARG AUTH0_DOMAIN
 ARG AUTH0_CLIENT_SECRET
@@ -23,45 +21,44 @@ ARG AUTH0_CALLBACK_URL
 ARG AUTH0_SECRET
 ARG APP_BASE_URL
 
+# Set environment variables for build time
 ENV AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
 ENV AUTH0_DOMAIN=${AUTH0_DOMAIN}
 ENV AUTH0_CLIENT_SECRET=${AUTH0_CLIENT_SECRET}
 ENV AUTH0_CALLBACK_URL=${AUTH0_CALLBACK_URL}
 ENV AUTH0_SECRET=${AUTH0_SECRET}
 ENV APP_BASE_URL=${APP_BASE_URL}
-
-# Next.js collects anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line to disable telemetry at build time
-# ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build the application
-RUN npm run build
+RUN bun run build
 
-# Production image, copy all the files and run next
+# Production image
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+# Set environment for production
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Uncomment the following line to disable telemetry during runtime
-# ENV NEXT_TELEMETRY_DISABLED 1
+# Create a non-root user
+RUN addgroup --system --gid 1001 bunjs && \
+    adduser --system --uid 1001 nextapp
 
-# Create a non-root user to run the app and own app files
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Copy necessary files from builder, checking if directories exist before copying
+COPY --from=builder --chown=nextapp:bunjs /app/.next ./.next
+COPY --from=builder --chown=nextapp:bunjs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextapp:bunjs /app/package.json ./package.json
 
-# Copy the built application
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Only copy public directory if it exists
+RUN mkdir -p ./public
+COPY --from=builder --chown=nextapp:bunjs /app/public ./public 2>/dev/null || true
 
 # Set the correct permissions
-USER nextjs
+USER nextapp
 
-# Expose the port the app will run on
+# Expose the port the app runs on
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["bun", "start"]

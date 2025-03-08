@@ -11,7 +11,7 @@ This document provides instructions for setting up and running the Books With Wi
 
 The docker-compose.yml file sets up the following services:
 
-1. **NextJS Application** - The main Books With Wilda web application
+1. **NextJS Application** - The main Books With Wilda web application (using Bun runtime)
 2. **Directus CMS** - Headless CMS for content management
 3. **Discourse** - Forum software for community discussions
 
@@ -64,6 +64,33 @@ All data is persisted using Docker volumes:
 - **discourse-redis-data**: Redis data for Discourse
 - **discourse-data**: Discourse application data
 
+## Environment Variables
+
+### NextJS Application
+- `AUTH0_CLIENT_ID`: Auth0 client ID
+- `AUTH0_DOMAIN`: Auth0 domain
+- `AUTH0_CLIENT_SECRET`: Auth0 client secret
+- `AUTH0_CALLBACK_URL`: Auth0 callback URL
+- `AUTH0_SECRET`: Auth0 secret
+- `APP_BASE_URL`: Base URL for the application
+
+### Directus CMS
+- `DIRECTUS_KEY`: Random key for Directus
+- `DIRECTUS_SECRET`: Random secret for Directus
+- `DIRECTUS_DB_PASSWORD`: Password for Directus database
+- `DIRECTUS_ADMIN_EMAIL`: Email for Directus admin account
+- `DIRECTUS_ADMIN_PASSWORD`: Password for Directus admin account
+- `DIRECTUS_PUBLIC_URL`: Public URL for Directus
+
+### Discourse
+- `DISCOURSE_DB_PASSWORD`: Password for Discourse database
+- `DISCOURSE_HOSTNAME`: Hostname for Discourse
+- `DISCOURSE_SITE_NAME`: Site name for Discourse
+- `DISCOURSE_ADMIN_USERNAME`: Username for Discourse admin account
+- `DISCOURSE_ADMIN_PASSWORD`: Password for Discourse admin account
+- `DISCOURSE_ADMIN_EMAIL`: Email for Discourse admin account
+- `DISCOURSE_EXTERNAL_HOSTNAME`: External hostname for Discourse
+
 ## Stopping the Services
 
 ```bash
@@ -83,7 +110,7 @@ For development, you might want to run only the databases and work with the Next
 docker-compose up -d directus directus-db discourse discourse-db discourse-redis
 
 # Run NextJS locally
-npm run dev
+bun run dev
 ```
 
 ## Troubleshooting

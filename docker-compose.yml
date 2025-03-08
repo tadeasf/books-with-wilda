@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Next.js application
+  # Next.js application with Bun
   nextjs:
     build:
       context: .
@@ -34,10 +34,15 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: directus
-      POSTGRES_PASSWORD: directus_password
+      POSTGRES_PASSWORD: ${DIRECTUS_DB_PASSWORD:-directus_password}
       POSTGRES_DB: directus
     volumes:
       - directus-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U directus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
     restart: unless-stopped
@@ -48,22 +53,25 @@ services:
     ports:
       - "8055:8055"
     environment:
-      KEY: 'directus-key-random-string'
-      SECRET: 'directus-secret-random-string'
+      KEY: ${DIRECTUS_KEY:-directus-key-random-string}
+      SECRET: ${DIRECTUS_SECRET:-directus-secret-random-string}
       DB_CLIENT: 'pg'
       DB_HOST: 'directus-db'
       DB_PORT: '5432'
       DB_DATABASE: 'directus'
       DB_USER: 'directus'
-      DB_PASSWORD: 'directus_password'
-      ADMIN_EMAIL: 'admin@example.com'
-      ADMIN_PASSWORD: 'admin_password'
-      PUBLIC_URL: 'http://localhost:8055'
+      DB_PASSWORD: ${DIRECTUS_DB_PASSWORD:-directus_password}
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:-admin_password}
+      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:-http://localhost:8055}
+      CORS_ENABLED: 'true'
+      CORS_ORIGIN: ${APP_BASE_URL:-http://localhost:3000}
     volumes:
       - directus-uploads:/directus/uploads
       - directus-extensions:/directus/extensions
     depends_on:
-      - directus-db
+      directus-db:
+        condition: service_healthy
     networks:
       - app-network
     restart: unless-stopped
@@ -73,10 +81,15 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: discourse
-      POSTGRES_PASSWORD: discourse_password
+      POSTGRES_PASSWORD: ${DISCOURSE_DB_PASSWORD:-discourse_password}
       POSTGRES_DB: discourse
     volumes:
       - discourse-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U discourse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
     restart: unless-stopped
@@ -86,6 +99,11 @@ services:
     image: redis:7-alpine
     volumes:
       - discourse-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
     restart: unless-stopped
@@ -99,21 +117,24 @@ services:
       - DISCOURSE_DATABASE_HOST=discourse-db
       - DISCOURSE_DATABASE_PORT_NUMBER=5432
       - DISCOURSE_DATABASE_USER=discourse
-      - DISCOURSE_DATABASE_PASSWORD=discourse_password
+      - DISCOURSE_DATABASE_PASSWORD=${DISCOURSE_DB_PASSWORD:-discourse_password}
       - DISCOURSE_DATABASE_NAME=discourse
       - DISCOURSE_REDIS_HOST=discourse-redis
       - DISCOURSE_REDIS_PORT_NUMBER=6379
-      - DISCOURSE_HOSTNAME=localhost
-      - DISCOURSE_SITE_NAME=Books With Wilda Forum
-      - DISCOURSE_USERNAME=admin
-      - DISCOURSE_PASSWORD=password123
-      - DISCOURSE_EMAIL=admin@example.com
+      - DISCOURSE_HOSTNAME=${DISCOURSE_HOSTNAME:-localhost}
+      - DISCOURSE_SITE_NAME=${DISCOURSE_SITE_NAME:-Books With Wilda Forum}
+      - DISCOURSE_USERNAME=${DISCOURSE_ADMIN_USERNAME:-admin}
+      - DISCOURSE_PASSWORD=${DISCOURSE_ADMIN_PASSWORD:-password123}
+      - DISCOURSE_EMAIL=${DISCOURSE_ADMIN_EMAIL:-admin@example.com}
       - ALLOW_EMPTY_PASSWORD=no
+      - DISCOURSE_EXTERNAL_HOSTNAME=${DISCOURSE_EXTERNAL_HOSTNAME:-localhost}
     volumes:
       - discourse-data:/bitnami/discourse
     depends_on:
-      - discourse-db
-      - discourse-redis
+      discourse-db:
+        condition: service_healthy
+      discourse-redis:
+        condition: service_healthy
     networks:
       - app-network
     restart: unless-stopped
