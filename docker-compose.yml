@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # Next.js application
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
+        - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+        - AUTH0_CLIENT_SECRET=${AUTH0_CLIENT_SECRET}
+        - AUTH0_CALLBACK_URL=${AUTH0_CALLBACK_URL}
+        - AUTH0_SECRET=${AUTH0_SECRET}
+        - APP_BASE_URL=${APP_BASE_URL}
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN}
+      - AUTH0_CLIENT_SECRET=${AUTH0_CLIENT_SECRET}
+      - AUTH0_CALLBACK_URL=${AUTH0_CALLBACK_URL}
+      - AUTH0_SECRET=${AUTH0_SECRET}
+      - APP_BASE_URL=${APP_BASE_URL}
+      - NODE_ENV=production
+    restart: unless-stopped
+    depends_on:
+      - directus
+    networks:
+      - app-network
+
+  # PostgreSQL for Directus
+  directus-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: directus
+      POSTGRES_PASSWORD: directus_password
+      POSTGRES_DB: directus
+    volumes:
+      - directus-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Directus CMS
+  directus:
+    image: directus/directus:latest
+    ports:
+      - "8055:8055"
+    environment:
+      KEY: 'directus-key-random-string'
+      SECRET: 'directus-secret-random-string'
+      DB_CLIENT: 'pg'
+      DB_HOST: 'directus-db'
+      DB_PORT: '5432'
+      DB_DATABASE: 'directus'
+      DB_USER: 'directus'
+      DB_PASSWORD: 'directus_password'
+      ADMIN_EMAIL: 'admin@example.com'
+      ADMIN_PASSWORD: 'admin_password'
+      PUBLIC_URL: 'http://localhost:8055'
+    volumes:
+      - directus-uploads:/directus/uploads
+      - directus-extensions:/directus/extensions
+    depends_on:
+      - directus-db
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # PostgreSQL for Discourse
+  discourse-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: discourse
+      POSTGRES_PASSWORD: discourse_password
+      POSTGRES_DB: discourse
+    volumes:
+      - discourse-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Redis for Discourse
+  discourse-redis:
+    image: redis:7-alpine
+    volumes:
+      - discourse-redis-data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Discourse
+  discourse:
+    image: bitnami/discourse:latest
+    ports:
+      - "3080:3000"
+    environment:
+      - DISCOURSE_DATABASE_HOST=discourse-db
+      - DISCOURSE_DATABASE_PORT_NUMBER=5432
+      - DISCOURSE_DATABASE_USER=discourse
+      - DISCOURSE_DATABASE_PASSWORD=discourse_password
+      - DISCOURSE_DATABASE_NAME=discourse
+      - DISCOURSE_REDIS_HOST=discourse-redis
+      - DISCOURSE_REDIS_PORT_NUMBER=6379
+      - DISCOURSE_HOSTNAME=localhost
+      - DISCOURSE_SITE_NAME=Books With Wilda Forum
+      - DISCOURSE_USERNAME=admin
+      - DISCOURSE_PASSWORD=password123
+      - DISCOURSE_EMAIL=admin@example.com
+      - ALLOW_EMPTY_PASSWORD=no
+    volumes:
+      - discourse-data:/bitnami/discourse
+    depends_on:
+      - discourse-db
+      - discourse-redis
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  # Directus volumes
+  directus-db-data:
+  directus-uploads:
+  directus-extensions:
+  
+  # Discourse volumes
+  discourse-db-data:
+  discourse-redis-data:
+  discourse-data:
