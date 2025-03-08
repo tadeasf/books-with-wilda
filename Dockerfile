@@ -4,7 +4,8 @@ WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
-COPY package.json bun.lock ./
+COPY package.json ./
+COPY bun.lock ./
 RUN bun install --frozen-lockfile
 
 # Build the application
@@ -12,6 +13,9 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Create public directory if it doesn't exist
+RUN mkdir -p ./public
 
 # Environment variables needed at build time
 ARG AUTH0_CLIENT_ID
@@ -45,14 +49,15 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 bunjs && \
     adduser --system --uid 1001 nextapp
 
-# Copy necessary files from builder, checking if directories exist before copying
+# Create necessary directories
+RUN mkdir -p ./public
+RUN mkdir -p ./.next
+
+# Copy necessary files from builder
 COPY --from=builder --chown=nextapp:bunjs /app/.next ./.next
 COPY --from=builder --chown=nextapp:bunjs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextapp:bunjs /app/package.json ./package.json
-
-# Only copy public directory if it exists
-RUN mkdir -p ./public
-COPY --from=builder --chown=nextapp:bunjs /app/public ./public 2>/dev/null || true
+COPY --from=builder --chown=nextapp:bunjs /app/public ./public
 
 # Set the correct permissions
 USER nextapp
