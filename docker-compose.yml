@@ -13,7 +13,7 @@ services:
         - AUTH0_CALLBACK_URL=${AUTH0_CALLBACK_URL}
         - AUTH0_SECRET=${AUTH0_SECRET}
         - APP_BASE_URL=${APP_BASE_URL}
-        - NEXT_PUBLIC_FORUM_URL=${NEXT_PUBLIC_FORUM_URL:-http://localhost:8080}
+        - NEXT_PUBLIC_FORUM_URL=${NEXT_PUBLIC_FORUM_URL}
     ports:
       - "24183:3000"
     environment:
@@ -24,8 +24,8 @@ services:
       - AUTH0_SECRET=${AUTH0_SECRET}
       - APP_BASE_URL=${APP_BASE_URL}
       - NODE_ENV=production
-      - FORUM_URL=${FORUM_URL:-http://localhost:8080}
-      - NEXT_PUBLIC_FORUM_URL=${NEXT_PUBLIC_FORUM_URL:-http://localhost:8080}
+      - FORUM_URL=${FORUM_URL}
+      - NEXT_PUBLIC_FORUM_URL=${NEXT_PUBLIC_FORUM_URL}
     restart: unless-stopped
     depends_on:
       - directus
@@ -67,9 +67,9 @@ services:
       DB_PASSWORD: ${DIRECTUS_DB_PASSWORD:-directus_password}
       ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:-admin_password}
-      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:-http://localhost:8055}
+      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:-https://books.admin.tadeasfort.com}
       CORS_ENABLED: 'true'
-      CORS_ORIGIN: ${APP_BASE_URL:-http://localhost:3000}
+      CORS_ORIGIN: ${APP_BASE_URL}
     volumes:
       - directus-uploads:/directus/uploads
       - directus-extensions:/directus/extensions
@@ -102,7 +102,7 @@ services:
       - flarum-db
     environment:
       FLARUM_DEBUG: ${FLARUM_DEBUG:-false}
-      FORUM_URL: ${FORUM_URL:-http://localhost:8080}
+      FORUM_URL: ${FORUM_URL}
       DB_HOST: flarum-db
       DB_NAME: flarum
       DB_USER: flarum

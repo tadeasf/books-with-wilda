@@ -15,9 +15,9 @@ First, ensure your Auth0 application is properly configured:
 1. Log in to your [Auth0 Dashboard](https://manage.auth0.com/)
 2. Go to Applications > Your Application (or create a new one)
 3. In the Settings tab, configure the following:
-   - **Allowed Callback URLs**: Add `http://localhost:42897/auth/auth0/callback` (development) or your production callback URL
-   - **Allowed Web Origins**: Add `http://localhost:42897` (development) or your production Flarum URL
-   - **Allowed Logout URLs**: Add `http://localhost:42897` (development) or your production Flarum URL
+   - **Allowed Callback URLs**: Add `https://books.forum.tadeasfort.com/auth/auth0/callback` (production) or your development callback URL
+   - **Allowed Web Origins**: Add `https://books.forum.tadeasfort.com` (production) or your development Flarum URL
+   - **Allowed Logout URLs**: Add `https://books.forum.tadeasfort.com` (production) or your development Flarum URL
 4. Save changes
 
 ## Step 2: Install Required Flarum Extensions
@@ -125,7 +125,7 @@ Auth0 sends user identifiers that may not be compatible with Flarum's username r
 
 ## Step 4: Configure the OAuth Extensions in Flarum
 
-1. Log in to your Flarum admin panel (http://localhost:42897/admin)
+1. Log in to your Flarum admin panel (https://books.forum.tadeasfort.com/admin)
 2. Go to Extensions and enable both "FoF OAuth" and "Generic OAuth" extensions
 3. Navigate to Administration > Settings > FoF OAuth
 4. In the Generic section, configure:
@@ -159,7 +159,7 @@ If you want to change the displayed name from "Generic" to "Auth0":
 ## Step 7: Testing the Integration
 
 1. Log out of Flarum admin
-2. Go to your Flarum homepage
+2. Go to your Flarum homepage (https://books.forum.tadeasfort.com)
 3. Click "Log In" and you should see the Auth0 login option
 4. Click on it to be redirected to the Auth0 login page
 5. After successful authentication, you should be redirected back to Flarum and logged in

@@ -135,7 +135,7 @@ docker exec -it books-with-wilda_flarum_1 sh -c "cd /flarum/app && php flarum ca
 
 echo -e "${GREEN}✅ Extensions installed successfully!${NC}"
 echo -e "${YELLOW}Next steps:${NC}"
-echo -e "1. Log in to Flarum admin panel: ${GREEN}http://localhost:42897/admin${NC}"
+echo -e "1. Log in to Flarum admin panel: ${GREEN}https://books.forum.tadeasfort.com/admin${NC}"
 echo -e "2. Enable both extensions (FoF OAuth and Generic OAuth)"
 echo -e "3. Configure Auth0 integration as described in ${GREEN}AUTH0_FLARUM_SETUP.md${NC}"
 echo
