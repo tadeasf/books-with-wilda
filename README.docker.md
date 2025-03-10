@@ -13,7 +13,7 @@ The docker-compose.yml file sets up the following services:
 
 1. **NextJS Application** - The main Books With Wilda web application (using Bun runtime)
 2. **Directus CMS** - Headless CMS for content management
-3. **Discourse** - Forum software for community discussions
+3. **Flarum** - Modern, lightweight forum software for community discussions
 
 ## Getting Started
 
@@ -40,18 +40,18 @@ docker-compose up -d --build
 
 - **NextJS Application**: http://localhost:3000
 - **Directus CMS**: http://localhost:8055
-- **Discourse Forum**: http://localhost:3080
+- **Flarum Forum**: http://localhost:8080
 
 ### 4. Default Admin Credentials
 
 #### Directus CMS
 - **Email**: admin@example.com
-- **Password**: admin_password
+- **Password**: admin_secure_password
 
-#### Discourse
+#### Flarum
 - **Username**: admin
 - **Email**: admin@example.com
-- **Password**: password123
+- **Password**: flarum_admin_secure_password
 
 ## Data Persistence
 
@@ -60,9 +60,9 @@ All data is persisted using Docker volumes:
 - **directus-db-data**: PostgreSQL data for Directus
 - **directus-uploads**: Uploaded files in Directus
 - **directus-extensions**: Directus extensions
-- **discourse-db-data**: PostgreSQL data for Discourse
-- **discourse-redis-data**: Redis data for Discourse
-- **discourse-data**: Discourse application data
+- **flarum-db-data**: MariaDB data for Flarum
+- **flarum-data**: Flarum assets and user data
+- **flarum-extensions**: Flarum extensions
 
 ## Environment Variables
 
@@ -82,14 +82,13 @@ All data is persisted using Docker volumes:
 - `DIRECTUS_ADMIN_PASSWORD`: Password for Directus admin account
 - `DIRECTUS_PUBLIC_URL`: Public URL for Directus
 
-### Discourse
-- `DISCOURSE_DB_PASSWORD`: Password for Discourse database
-- `DISCOURSE_HOSTNAME`: Hostname for Discourse
-- `DISCOURSE_SITE_NAME`: Site name for Discourse
-- `DISCOURSE_ADMIN_USERNAME`: Username for Discourse admin account
-- `DISCOURSE_ADMIN_PASSWORD`: Password for Discourse admin account
-- `DISCOURSE_ADMIN_EMAIL`: Email for Discourse admin account
-- `DISCOURSE_EXTERNAL_HOSTNAME`: External hostname for Discourse
+### Flarum
+- `FORUM_URL`: URL for Flarum 
+- `FLARUM_DB_ROOT_PASSWORD`: Root password for MariaDB
+- `FLARUM_DB_PASSWORD`: Password for Flarum database user
+- `FLARUM_ADMIN_PASSWORD`: Password for Flarum admin account
+- `FLARUM_ADMIN_EMAIL`: Email for Flarum admin account
+- `FLARUM_TITLE`: Site title for Flarum
 
 ## Stopping the Services
 
@@ -107,7 +106,7 @@ For development, you might want to run only the databases and work with the Next
 
 ```bash
 # Run only the databases and services
-docker-compose up -d directus directus-db discourse discourse-db discourse-redis
+docker-compose up -d directus directus-db flarum flarum-db
 
 # Run NextJS locally
 bun run dev
@@ -122,7 +121,7 @@ To check logs for a specific service:
 ```bash
 docker-compose logs -f nextjs
 docker-compose logs -f directus
-docker-compose logs -f discourse
+docker-compose logs -f flarum
 ```
 
 ### Rebuilding a Specific Service

@@ -3,10 +3,13 @@
 import Link from 'next/link';
 import { useUser } from '@auth0/nextjs-auth0';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, BookOpen } from 'lucide-react';
+import { LogIn, LogOut, BookOpen, MessageSquare } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 export default function Header() {
   const { user, isLoading } = useUser();
+  // Get the Forum URL from environment variable or use a default
+  const forumUrl = process.env.NEXT_PUBLIC_FORUM_URL || 'http://localhost:8080';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
@@ -35,6 +38,15 @@ export default function Header() {
               </Link>
             </>
           )}
+          
+          <Button asChild variant="ghost" size="sm" className="gap-1">
+            <a href={forumUrl} target="_blank" rel="noopener noreferrer">
+              <MessageSquare className="h-4 w-4" />
+              <span>Forum</span>
+            </a>
+          </Button>
+          
+          <ThemeToggle />
           
           <div className="ml-4">
             {isLoading ? (
