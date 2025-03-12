@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Next.js application with Bun
   nextjs:
@@ -117,6 +115,8 @@ services:
       AUTH0_CLIENT_SECRET: ${AUTH0_FLARUM_CLIENT_SECRET}
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_CALLBACK_URL: ${AUTH0_FLARUM_CALLBACK_URL}
+      # DNS configuration for better network connectivity
+      GODEBUG: netdns=go
     ports:
       - "42897:8888"
     volumes:
@@ -124,8 +124,14 @@ services:
       - flarum-extensions:/flarum/app/extensions
       - flarum-composer:/flarum/app/vendor
       - flarum-config:/flarum/app/config
+    # Removed host network mode to allow port mapping to work
     networks:
       - app-network
+    extra_hosts:
+      - "mail.tadeasfort.com:194.5.152.243"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     restart: unless-stopped
 
 networks:

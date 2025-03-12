@@ -1,4 +1,5 @@
 import { BookOpen } from "lucide-react";
+import GoodreadsWidgets from '@/components/goodreads-widgets';
 
 export default function About() {
   return (
@@ -69,6 +70,11 @@ export default function About() {
             appetite for books of all genres. She represents the curious reader 
             in all of us, always searching for the next great story to get lost in.
           </p>
+        </div>
+
+        <div className="border-t pt-8">
+          <h2 className="text-2xl font-semibold mb-4">My Reading Activity</h2>
+          <GoodreadsWidgets />
         </div>
       </div>
     </div>

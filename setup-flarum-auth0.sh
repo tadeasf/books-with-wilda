@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to set up Auth0 integration with Flarum
+# Script to set up Auth0 integration with Flarum and add a link back to the main site
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -39,6 +39,15 @@ docker exec -it books-with-wilda_flarum_1 sh -c "cd /flarum/app && composer requ
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Failed to install Generic OAuth extension. Please check logs for details.${NC}"
+    exit 1
+fi
+
+# Install FoF Links extension
+echo -e "${YELLOW}Installing FoF Links extension...${NC}"
+docker exec -it books-with-wilda_flarum_1 sh -c "cd /flarum/app && composer require fof/links"
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to install FoF Links extension. Please check logs for details.${NC}"
     exit 1
 fi
 
@@ -129,6 +138,49 @@ else
     echo -e "${GREEN}Successfully updated Auth0 username handling code.${NC}"
 fi
 
+# Disable email verification by updating the database
+echo -e "${YELLOW}Disabling email verification requirement...${NC}"
+FLARUM_DB_PASSWORD=$(grep FLARUM_DB_PASSWORD .env | cut -d '=' -f2 || echo "flarum_password")
+
+docker exec -it books-with-wilda-flarum-db-1 mysql -u flarum -p"$FLARUM_DB_PASSWORD" -e "
+USE flarum;
+UPDATE flarum_permissions 
+SET permission = 'reply' 
+WHERE permission = 'viewForum' 
+AND group_id = 3;
+
+UPDATE flarum_permissions 
+SET permission = 'startDiscussion' 
+WHERE permission = 'viewForum' 
+AND group_id = 3;
+"
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to disable email verification. You may need to do this manually.${NC}"
+else
+    echo -e "${GREEN}Successfully disabled email verification requirement.${NC}"
+fi
+
+# Configure the link back to the main site
+echo -e "${YELLOW}Configuring link back to the main site...${NC}"
+
+# Get the main site URL from environment variables
+MAIN_SITE_URL=$(grep APP_BASE_URL .env | cut -d '=' -f2 || echo "https://books.tadeasfort.com")
+
+# Add the link to the database
+docker exec -it books-with-wilda-flarum-db-1 mysql -u flarum -p"$FLARUM_DB_PASSWORD" -e "
+USE flarum;
+INSERT INTO flarum_settings (key, value) 
+VALUES ('fof-links.items', '[{\"title\":\"Books with Wilda\",\"url\":\"$MAIN_SITE_URL\",\"position\":\"header\",\"icon\":\"fas fa-book\"}]')
+ON DUPLICATE KEY UPDATE value = '[{\"title\":\"Books with Wilda\",\"url\":\"$MAIN_SITE_URL\",\"position\":\"header\",\"icon\":\"fas fa-book\"}]';
+"
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to configure link back to main site. You may need to do this manually.${NC}"
+else
+    echo -e "${GREEN}Successfully configured link back to main site.${NC}"
+fi
+
 # Clear cache
 echo -e "${YELLOW}Clearing Flarum cache...${NC}"
 docker exec -it books-with-wilda_flarum_1 sh -c "cd /flarum/app && php flarum cache:clear"
@@ -136,7 +188,7 @@ docker exec -it books-with-wilda_flarum_1 sh -c "cd /flarum/app && php flarum ca
 echo -e "${GREEN}✅ Extensions installed successfully!${NC}"
 echo -e "${YELLOW}Next steps:${NC}"
 echo -e "1. Log in to Flarum admin panel: ${GREEN}https://books.forum.tadeasfort.com/admin${NC}"
-echo -e "2. Enable both extensions (FoF OAuth and Generic OAuth)"
+echo -e "2. Enable all installed extensions (FoF OAuth, Generic OAuth, and FoF Links)"
 echo -e "3. Configure Auth0 integration as described in ${GREEN}AUTH0_FLARUM_SETUP.md${NC}"
 echo
 
@@ -148,9 +200,6 @@ echo
 
 echo -e "${YELLOW}For more details, see the AUTH0_FLARUM_SETUP.md file.${NC}"
 
-# Disable email verification instructions
-echo -e "${YELLOW}Important:${NC} To disable email verification:"
-echo -e "1. Log in to Flarum admin panel"
-echo -e "2. Go to Administration > Permissions"
-echo -e "3. Find 'Email Confirmation' in the Sign Up section"
-echo -e "4. Disable it by turning off the toggle for all groups" 
+echo -e "${GREEN}✅ Link back to main site configured!${NC}"
+echo -e "${YELLOW}You should now see a 'Books with Wilda' link in the forum header.${NC}"
+echo -e "${YELLOW}You can customize this link further in the admin panel under the Links section.${NC}" 
