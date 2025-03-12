@@ -1,6 +1,7 @@
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import BlogPosts from '@/components/blog-posts';
 
 export default function Home() {
   return (
@@ -29,30 +30,9 @@ export default function Home() {
           </Button>
         </div>
         
-        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div className="flex flex-col items-center gap-2 rounded-lg border p-6">
-            <BookOpen className="h-12 w-12 text-primary" />
-            <h3 className="text-xl font-bold">Track Your Books</h3>
-            <p className="text-center text-gray-500">
-              Keep a record of books you&apos;ve read and want to read.
-            </p>
-          </div>
-          
-          <div className="flex flex-col items-center gap-2 rounded-lg border p-6">
-            <BookOpen className="h-12 w-12 text-primary" />
-            <h3 className="text-xl font-bold">Share Recommendations</h3>
-            <p className="text-center text-gray-500">
-              Share your favorite reads with friends and the community.
-            </p>
-          </div>
-          
-          <div className="flex flex-col items-center gap-2 rounded-lg border p-6">
-            <BookOpen className="h-12 w-12 text-primary" />
-            <h3 className="text-xl font-bold">Discover New Books</h3>
-            <p className="text-center text-gray-500">
-              Find your next great read from personalized recommendations.
-            </p>
-          </div>
+        <div className="mt-16 w-full">
+          <h2 className="text-3xl font-bold mb-8">Latest Blog Posts</h2>
+          <BlogPosts />
         </div>
       </div>
     </div>
