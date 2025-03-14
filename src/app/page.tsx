@@ -20,7 +20,7 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button asChild size="lg">
-                  <Link href="/auth/login">
+                  <Link href="/auth/login?returnTo=/dashboard">
                     Get Started <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -114,7 +114,7 @@ export default function Home() {
             Join thousands of readers who have already discovered their next favorite book on our platform.
           </p>
           <Button size="lg" variant="outline" className="border-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
-            <Link href="/auth/login">
+            <Link href="/auth/login?returnTo=/dashboard">
               Join Now <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

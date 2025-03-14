@@ -24,13 +24,21 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
   const { user, isLoading } = useUser();
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  
   // Get the Forum URL from environment variable or use a default
   const forumUrl = process.env.NEXT_PUBLIC_FORUM_URL || 'https://books.forum.tadeasfort.com';
+
+  // Create login URL with current path as returnTo
+  const getLoginUrl = useCallback(() => {
+    return `/auth/login?returnTo=${encodeURIComponent(pathname)}`;
+  }, [pathname]);
 
   const navigationItems = [
     { name: "Home", href: "/" },
@@ -112,7 +120,7 @@ export default function Header() {
               </div>
             ) : (
               <Button asChild variant="outline" size="sm">
-                <Link href="/auth/login">
+                <Link href={getLoginUrl()}>
                   <LogIn className="mr-2 h-4 w-4" />
                   <span>Login</span>
                 </Link>
@@ -200,7 +208,7 @@ export default function Header() {
                       variant="outline" 
                       onClick={() => setOpen(false)}
                     >
-                      <Link href="/auth/login" className="flex items-center">
+                      <Link href={getLoginUrl()} className="flex items-center">
                         <LogIn className="mr-2 h-4 w-4" />
                         <span>Login</span>
                       </Link>

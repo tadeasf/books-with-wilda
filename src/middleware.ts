@@ -45,7 +45,24 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/profile')
   ) {
-    return await retryWithDelay(() => auth0.middleware(request));
+    try {
+      // Try to get the user session
+      const session = await auth0.getSession(request);
+      
+      // If no session, redirect to login with returnTo set to the requested URL
+      if (!session) {
+        const returnTo = encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search);
+        return NextResponse.redirect(
+          new URL(`/auth/login?returnTo=${returnTo}`, process.env.APP_BASE_URL as string)
+        );
+      }
+      
+      // User is authenticated, proceed with Auth0 middleware to handle session
+      return await retryWithDelay(() => auth0.middleware(request));
+    } catch (error) {
+      console.error('Auth0 session error:', error);
+      return NextResponse.next();
+    }
   }
   
   // For all other routes, proceed without authentication middleware

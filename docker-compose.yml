@@ -30,7 +30,6 @@ services:
     restart: unless-stopped
     depends_on:
       - directus
-      - nodebb
     networks:
       - app-network
 
@@ -81,6 +80,19 @@ services:
       - app-network
     restart: unless-stopped
 
+  mongodb:
+    image: mongo:8.0
+    ports:
+      - "20832:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - app-network
+    restart: unless-stopped
+
 networks:
   app-network:
     driver: bridge
@@ -90,3 +102,5 @@ volumes:
   directus-db-data:
   directus-uploads:
   directus-extensions:
+  # MongoDB volume
+  mongodb-data:

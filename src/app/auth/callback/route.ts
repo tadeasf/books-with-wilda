@@ -5,9 +5,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    return auth0.middleware(request);
+    // Call the Auth0 middleware which will handle the callback through the onCallback hook
+    return await auth0.middleware(request);
   } catch (error) {
     console.error('Error in callback route:', error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    // If there's an error, redirect to the home page
+    return NextResponse.redirect(new URL('/', process.env.APP_BASE_URL as string));
   }
 } 
