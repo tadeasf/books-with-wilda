@@ -20,14 +20,15 @@ async function retryWithDelay<T extends NextResponse>(
       const nextDelay = Math.min(currentDelay * 2, MAX_RETRY_DELAY);
       return retryWithDelay(fn, retries - 1, nextDelay);
     }
-    // If all retries failed, redirect to home
+    // If all retries failed, allow non-authenticated access
     console.error('Auth0 middleware error after retries:', error);
-    return NextResponse.next(); // Changed from redirect to next() to allow non-authenticated access
+    return NextResponse.next();
   }
 }
 
 export async function middleware(request: NextRequest) {
   // Let Auth0 middleware handle all /auth routes
+  // This will automatically handle login, logout, callback, profile, etc.
   if (request.nextUrl.pathname.startsWith('/auth')) {
     return await retryWithDelay(() => auth0.middleware(request));
   }
@@ -57,7 +58,8 @@ export async function middleware(request: NextRequest) {
         );
       }
       
-      // User is authenticated, proceed with Auth0 middleware to handle session
+      // User is authenticated, proceed with Auth0 middleware to handle session maintenance
+      // This ensures rolling sessions and other session features work properly
       return await retryWithDelay(() => auth0.middleware(request));
     } catch (error) {
       console.error('Auth0 session error:', error);
