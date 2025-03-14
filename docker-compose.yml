@@ -24,10 +24,13 @@ services:
       - NODE_ENV=production
       - FORUM_URL=${FORUM_URL}
       - NEXT_PUBLIC_FORUM_URL=${NEXT_PUBLIC_FORUM_URL}
+      - DIRECTUS_PUBLIC_URL=${DIRECTUS_PUBLIC_URL}
+      - NEXT_DIRECTUS_STATIC_TOKEN=${NEXT_DIRECTUS_STATIC_TOKEN}
+      - NEXT_PUBLIC_DIRECTUS_URL=${DIRECTUS_PUBLIC_URL}
     restart: unless-stopped
     depends_on:
       - directus
-      - flarum
+      - nodebb
     networks:
       - app-network
 
@@ -67,7 +70,7 @@ services:
       ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:-admin_password}
       PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:-https://books.admin.tadeasfort.com}
       CORS_ENABLED: 'true'
-      CORS_ORIGIN: ${APP_BASE_URL}
+      CORS_ORIGIN: '*'
     volumes:
       - directus-uploads:/directus/uploads
       - directus-extensions:/directus/extensions
@@ -76,62 +79,6 @@ services:
         condition: service_healthy
     networks:
       - app-network
-    restart: unless-stopped
-
-  # Flarum forum database
-  flarum-db:
-    image: mariadb:10.6
-    environment:
-      MYSQL_ROOT_PASSWORD: ${FLARUM_DB_ROOT_PASSWORD:-flarum_root_password}
-      MYSQL_DATABASE: flarum
-      MYSQL_USER: flarum
-      MYSQL_PASSWORD: ${FLARUM_DB_PASSWORD:-flarum_password}
-    volumes:
-      - flarum-db-data:/var/lib/mysql
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  # Flarum forum
-  flarum:
-    image: mondedie/flarum:latest
-    container_name: books-with-wilda_flarum_1
-    depends_on:
-      - flarum-db
-    environment:
-      FLARUM_DEBUG: ${FLARUM_DEBUG:-false}
-      FORUM_URL: ${FORUM_URL}
-      DB_HOST: flarum-db
-      DB_NAME: flarum
-      DB_USER: flarum
-      DB_PASS: ${FLARUM_DB_PASSWORD:-flarum_password}
-      DB_PREF: flarum_
-      FLARUM_ADMIN_USER: admin
-      FLARUM_ADMIN_PASS: ${FLARUM_ADMIN_PASSWORD:-flarum_admin_password}
-      FLARUM_ADMIN_MAIL: ${FLARUM_ADMIN_EMAIL:-admin@example.com}
-      FLARUM_TITLE: ${FLARUM_TITLE:-Books with Wilda Forum}
-      # Auth0 environment variables for reference (used in setup guide)
-      AUTH0_CLIENT_ID: ${AUTH0_FLARUM_CLIENT_ID}
-      AUTH0_CLIENT_SECRET: ${AUTH0_FLARUM_CLIENT_SECRET}
-      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
-      AUTH0_CALLBACK_URL: ${AUTH0_FLARUM_CALLBACK_URL}
-      # DNS configuration for better network connectivity
-      GODEBUG: netdns=go
-    ports:
-      - "42897:8888"
-    volumes:
-      - flarum-data:/flarum/app/public/assets
-      - flarum-extensions:/flarum/app/extensions
-      - flarum-composer:/flarum/app/vendor
-      - flarum-config:/flarum/app/config
-    # Removed host network mode to allow port mapping to work
-    networks:
-      - app-network
-    extra_hosts:
-      - "mail.tadeasfort.com:194.5.152.243"
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
     restart: unless-stopped
 
 networks:
@@ -143,9 +90,3 @@ volumes:
   directus-db-data:
   directus-uploads:
   directus-extensions:
-  # Flarum volumes
-  flarum-db-data:
-  flarum-data:
-  flarum-extensions:
-  flarum-composer:
-  flarum-config:

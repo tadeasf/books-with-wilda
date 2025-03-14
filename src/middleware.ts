@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth0 } from "./lib/auth0";
-
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY = 5000; // 5 seconds
 const MAX_RETRY_DELAY = 10000; // 10 seconds
@@ -23,12 +22,17 @@ async function retryWithDelay<T extends NextResponse>(
     }
     // If all retries failed, redirect to home
     console.error('Auth0 middleware error after retries:', error);
-    return NextResponse.redirect(new URL('/', process.env.APP_BASE_URL!));
+    return NextResponse.next(); // Changed from redirect to next() to allow non-authenticated access
   }
 }
 
 export async function middleware(request: NextRequest) {
-  // Don't retry static assets or API routes
+  // Let Auth0 middleware handle all /auth routes
+  if (request.nextUrl.pathname.startsWith('/auth')) {
+    return await retryWithDelay(() => auth0.middleware(request));
+  }
+  
+  // Don't process static assets or API routes with Auth0
   if (
     request.nextUrl.pathname.startsWith('/_next') ||
     request.nextUrl.pathname.startsWith('/api')
@@ -36,7 +40,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  return await retryWithDelay(() => auth0.middleware(request));
+  // Only protect certain routes that require authentication
+  if (
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/profile')
+  ) {
+    return await retryWithDelay(() => auth0.middleware(request));
+  }
+  
+  // For all other routes, proceed without authentication middleware
+  return NextResponse.next();
 }
 
 export const config = {

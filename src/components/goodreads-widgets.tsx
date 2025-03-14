@@ -16,7 +16,7 @@ export default function GoodreadsWidgets() {
     const scripts = [
       'https://www.goodreads.com/user_challenges/widget/62899486-tade-fo-t?challenge_id=11627&v=2',
       'https://www.goodreads.com/quotes/widget/62899486-tade-fo-t?v=2',
-      'https://www.goodreads.com/review/grid_widget/62899486.Tade%C3%A1%C5%A1's%20read%20book%20montage?cover_size=medium&hide_link=true&hide_title=true&num_books=200&order=a&shelf=read&sort=date_added&widget_id=1741796452'
+      'https://www.goodreads.com/review/grid_widget/62899486.Tade%C3%A1%C5%A1\'s%20read%20book%20montage?cover_size=medium&hide_link=true&hide_title=true&num_books=200&order=a&shelf=read&sort=date_added&widget_id=1741796452'
     ].map(loadScript);
 
     return () => scripts.forEach(script => script.remove());
