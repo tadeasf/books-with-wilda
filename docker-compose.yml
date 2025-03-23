@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Next.js application with Bun
   nextjs:
@@ -13,8 +11,9 @@ services:
         - AUTH0_CALLBACK_URL=${AUTH0_CALLBACK_URL}
         - AUTH0_SECRET=${AUTH0_SECRET}
         - APP_BASE_URL=${APP_BASE_URL}
+        - NEXT_PUBLIC_FORUM_URL=${NEXT_PUBLIC_FORUM_URL}
     ports:
-      - "3000:3000"
+      - "24183:3000"
     environment:
       - AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
       - AUTH0_DOMAIN=${AUTH0_DOMAIN}
@@ -23,6 +22,11 @@ services:
       - AUTH0_SECRET=${AUTH0_SECRET}
       - APP_BASE_URL=${APP_BASE_URL}
       - NODE_ENV=production
+      - FORUM_URL=${FORUM_URL}
+      - NEXT_PUBLIC_FORUM_URL=${NEXT_PUBLIC_FORUM_URL}
+      - DIRECTUS_PUBLIC_URL=${DIRECTUS_PUBLIC_URL}
+      - NEXT_DIRECTUS_STATIC_TOKEN=${NEXT_DIRECTUS_STATIC_TOKEN}
+      - NEXT_PUBLIC_DIRECTUS_URL=${DIRECTUS_PUBLIC_URL}
     restart: unless-stopped
     depends_on:
       - directus
@@ -51,7 +55,7 @@ services:
   directus:
     image: directus/directus:latest
     ports:
-      - "8055:8055"
+      - "36295:8055"
     environment:
       KEY: ${DIRECTUS_KEY:-directus-key-random-string}
       SECRET: ${DIRECTUS_SECRET:-directus-secret-random-string}
@@ -63,9 +67,9 @@ services:
       DB_PASSWORD: ${DIRECTUS_DB_PASSWORD:-directus_password}
       ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:-admin_password}
-      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:-http://localhost:8055}
+      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:-https://books.admin.tadeasfort.com}
       CORS_ENABLED: 'true'
-      CORS_ORIGIN: ${APP_BASE_URL:-http://localhost:3000}
+      CORS_ORIGIN: '*'
     volumes:
       - directus-uploads:/directus/uploads
       - directus-extensions:/directus/extensions
@@ -76,65 +80,15 @@ services:
       - app-network
     restart: unless-stopped
 
-  # PostgreSQL for Discourse
-  discourse-db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: discourse
-      POSTGRES_PASSWORD: ${DISCOURSE_DB_PASSWORD:-discourse_password}
-      POSTGRES_DB: discourse
-    volumes:
-      - discourse-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U discourse"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  # Redis for Discourse
-  discourse-redis:
-    image: redis:7-alpine
-    volumes:
-      - discourse-redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  # Discourse
-  discourse:
-    image: bitnami/discourse:latest
+  mongodb:
+    image: mongo:8.0
     ports:
-      - "3080:3000"
+      - "20832:27017"
     environment:
-      - DISCOURSE_DATABASE_HOST=discourse-db
-      - DISCOURSE_DATABASE_PORT_NUMBER=5432
-      - DISCOURSE_DATABASE_USER=discourse
-      - DISCOURSE_DATABASE_PASSWORD=${DISCOURSE_DB_PASSWORD:-discourse_password}
-      - DISCOURSE_DATABASE_NAME=discourse
-      - DISCOURSE_REDIS_HOST=discourse-redis
-      - DISCOURSE_REDIS_PORT_NUMBER=6379
-      - DISCOURSE_HOSTNAME=${DISCOURSE_HOSTNAME:-localhost}
-      - DISCOURSE_SITE_NAME=${DISCOURSE_SITE_NAME:-Books With Wilda Forum}
-      - DISCOURSE_USERNAME=${DISCOURSE_ADMIN_USERNAME:-admin}
-      - DISCOURSE_PASSWORD=${DISCOURSE_ADMIN_PASSWORD:-password123}
-      - DISCOURSE_EMAIL=${DISCOURSE_ADMIN_EMAIL:-admin@example.com}
-      - ALLOW_EMPTY_PASSWORD=no
-      - DISCOURSE_EXTERNAL_HOSTNAME=${DISCOURSE_EXTERNAL_HOSTNAME:-localhost}
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     volumes:
-      - discourse-data:/bitnami/discourse
-    depends_on:
-      discourse-db:
-        condition: service_healthy
-      discourse-redis:
-        condition: service_healthy
+      - mongodb-data:/data/db
     networks:
       - app-network
     restart: unless-stopped
@@ -148,8 +102,5 @@ volumes:
   directus-db-data:
   directus-uploads:
   directus-extensions:
-  
-  # Discourse volumes
-  discourse-db-data:
-  discourse-redis-data:
-  discourse-data:
+  # MongoDB volume
+  mongodb-data:

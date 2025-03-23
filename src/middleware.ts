@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth0 } from "./lib/auth0";
-
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY = 5000; // 5 seconds
 const MAX_RETRY_DELAY = 10000; // 10 seconds
@@ -21,14 +20,20 @@ async function retryWithDelay<T extends NextResponse>(
       const nextDelay = Math.min(currentDelay * 2, MAX_RETRY_DELAY);
       return retryWithDelay(fn, retries - 1, nextDelay);
     }
-    // If all retries failed, redirect to home
+    // If all retries failed, allow non-authenticated access
     console.error('Auth0 middleware error after retries:', error);
-    return NextResponse.redirect(new URL('/', process.env.APP_BASE_URL!));
+    return NextResponse.next();
   }
 }
 
 export async function middleware(request: NextRequest) {
-  // Don't retry static assets or API routes
+  // Let Auth0 middleware handle all /auth routes
+  // This will automatically handle login, logout, callback, profile, etc.
+  if (request.nextUrl.pathname.startsWith('/auth')) {
+    return await retryWithDelay(() => auth0.middleware(request));
+  }
+  
+  // Don't process static assets or API routes with Auth0
   if (
     request.nextUrl.pathname.startsWith('/_next') ||
     request.nextUrl.pathname.startsWith('/api')
@@ -36,7 +41,34 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  return await retryWithDelay(() => auth0.middleware(request));
+  // Only protect certain routes that require authentication
+  if (
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/profile')
+  ) {
+    try {
+      // Try to get the user session
+      const session = await auth0.getSession(request);
+      
+      // If no session, redirect to login with returnTo set to the requested URL
+      if (!session) {
+        const returnTo = encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search);
+        return NextResponse.redirect(
+          new URL(`/auth/login?returnTo=${returnTo}`, process.env.APP_BASE_URL as string)
+        );
+      }
+      
+      // User is authenticated, proceed with Auth0 middleware to handle session maintenance
+      // This ensures rolling sessions and other session features work properly
+      return await retryWithDelay(() => auth0.middleware(request));
+    } catch (error) {
+      console.error('Auth0 session error:', error);
+      return NextResponse.next();
+    }
+  }
+  
+  // For all other routes, proceed without authentication middleware
+  return NextResponse.next();
 }
 
 export const config = {
